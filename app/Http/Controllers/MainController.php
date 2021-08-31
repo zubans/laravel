@@ -3,16 +3,42 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\XmlService;
 
 class MainController extends Controller
 {
-    public function home()
+    public function home() 
     {
-        return view('home');
-    }
+        $xml = '<Каталог>
+        <Товары>
+      
+          <Товар>
+            <!-- поля товара -->
+            <Код>1234567</Код>        <!--Код товара-->
+            <Вес>0.035</Вес>          <!--Вес товара-->
+            <Наименование>Наименование товара</Наименование> <!--Название товара-->
+            <Взаимозаменяемости>
+              <Взаимозаменяемость>
+                <Марка>CUMMINS</Марка>
+                <Модель>ISBe6.7 (ISDe6.7)</Модель>
+                <КатегорияТС>Двигатели</КатегорияТС>
+              </Взаимозаменяемость>
+              <!-- ... ещё взаимозаменяемости -->
+            </Взаимозаменяемости>
+            <!-- остальные поля можно игнорировать -->
+         </Товар>
+      
+         <Товар>
+            <!-- информация о другом товаре -->
+         </Товар>
+      
+         <!-- ... ещё товары ... -->
+      
+         </Товары>
+      </Каталог>';
+        $xmlArray = (new XmlService())->XmlToArray($xml);
+        dd($xmlArray);
 
-    public function about()
-    {
-        return view('about');
+        return view('home', );
     }
 }
