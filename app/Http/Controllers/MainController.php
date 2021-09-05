@@ -10,10 +10,12 @@ class MainController extends Controller
 {
     public function home()
     {
+        (new WorkWithBigFilesService())->addFileOfGoodsToDataBase();
+
 //        $xml = Storage::get('public/import0_1.xml');
-        $file = (new WorkWithBigFilesService())->readBigFile();
-        $xmlArray = (new XmlService())->XmlToArray($file);
-        dd($xmlArray);
+//        $file = (new WorkWithBigFilesService())->readBigFile();
+//        $xmlArray = (new XmlService())->XmlToArray($file);
+//        dd($xmlArray);
 //        $xmlFiles = Storage::get(App::basePath(). '/storage/public/import0_1.xml');
 //        dd($xmlFiles);
 //        if (empty($xmlFiles)) {
