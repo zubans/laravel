@@ -34,14 +34,6 @@ class Goods extends Model
     }
 
     /**
-     * @return string
-     */
-    public function getName(): string
-    {
-       return $this->name;
-    }
-
-    /**
      * @param int $code
      */
     public function setCode(int $code): void
@@ -50,27 +42,11 @@ class Goods extends Model
     }
 
     /**
-     * @return int
-     */
-    public function getCode(): int
-    {
-        return $this->code;
-    }
-
-    /**
      * @param string $weight
      */
     public function setWeight(string $weight): void
     {
-        $this->weight = $weight;
-    }
-
-    /**
-     * @return string
-     */
-    public function getWeight(): string
-    {
-        return $this->weight;
+        $this->weight = $weight ?? 0;
     }
 
     /**
@@ -78,15 +54,7 @@ class Goods extends Model
      */
     public function setQuantityMoscow(string $value): void
     {
-        $this->quantity_moscow = $value;
-    }
-
-    /**
-     * @return string
-     */
-    public function getQuantityMoscow(): string
-    {
-        return $this->quantity_moscow;
+        $this->quantity_moscow = $value ?? 0;
     }
 
     /**
@@ -94,15 +62,7 @@ class Goods extends Model
      */
     public function setQuantitySpeterburg(string $value): void
     {
-        $this->quantity_speterburg = $value;
-    }
-
-    /**
-     * @return string
-     */
-    public function getQuantitySpeterburg(): string
-    {
-        return $this->quantity_speterburg;
+        $this->quantity_speterburg = $value ?? 0;
     }
 
     /**
@@ -110,7 +70,7 @@ class Goods extends Model
      */
     public function setQuantitySamara(string $value): void
     {
-        $this->quantity_samara = $value;
+        $this->quantity_samara = $value ?? 0;
     }
 
     /**

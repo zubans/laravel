@@ -3,15 +3,10 @@
 namespace App\Services;
 
 use App\Models\Goods;
-use App\Services\XmlService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
-class WorkWithBigFilesService
+class WorkWithBigFilesService implements Fields
 {
-
-    const END_TAGS = "</Товары>
-	</Каталог>
-</КоммерческаяИнформация>";
-
     /**
      * @var int
      */
@@ -24,55 +19,81 @@ class WorkWithBigFilesService
 
     public function addFileOfGoodsToDataBase()
     {
-        $goods = new Goods();
+
         $result = $this->readBigFile();
         $arr = (new XmlService())->XmlToArray($result['xml']);
-        $catalog = $arr['Каталог'];
-        while ($this->fileSize >= $this->offset) {
-            $goodsArr = $result['countOfGoods'] === 1 ? $catalog['Товары']['Товар'] : $catalog['Товары']['Товар'][0];
+        $catalog = $arr[Fields::CATALOG];
+        $goodsArr[0] = [];
 
+//        while ($this->fileSize >= $this->offset) {
+//        $goodsArr = $catalog[Fields::TOVARS][Fields::TOVAR];
+        $result['countOfGoods'] === 1 ? $goodsArr[0] : $goodsArr = $catalog[Fields::TOVARS][Fields::TOVAR];
+
+        dd($goodsArr);
             foreach ($goodsArr as $item) {
-                if (!$goods->isRecordExist('code', $goodsArr['Код'])){
-                    $goods->setName($this->removeClassificatorString( $city = $arr['Классификатор']['Наименование']));
-                    $goods->setCode($item['Код']);
-                    $goods->setWeight($item['Вес']);
-                    switch ($city):
-                        case "Москва":
-                            $goods->setQuantityMoscow();
+                $goods = new Goods();
+                if (!$goods->isRecordExist('code', $item[Fields::COD])) {
+                    $goods
+                        ->setName(
+                            $this->removeClassificatorString($city = $arr[Fields::CLASSOFICATOR][Fields::NAMING])
+                        );
+                    $goods->setCode($item[Fields::COD]);
+                    $goods->setWeight($item[Fields::WES] ?? 0);
+                    switch ($city) {
+                        case Fields::MOSCOW:
+                            $goods->setQuantityMoscow($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            $goods->setPriceMoscow($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            break;
+                        case Fields::ST_PETERSBURG:
+                            $goods->setPriceSpeterburg($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            $goods->setQuantitySpeterburg($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            break;
+                        case Fields::CHELYABINSK:
+                            $goods->setPriceChelyabinsk($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            $goods->setQuantityChelyabinsk($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            break;
+                        case Fields::SAMARA:
+                            $goods->setPriceSamara($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            $goods->setQuantitySamara($item[Fields::RECALCULATION][Fields::PIECE] ?? 0);
+                            break;
+                        default:
+                            break;
+                    }
+                    $alternatives = [];
+                    if (empty($item[Fields::ALTERNATIVES])) {
+                        $goods->save();
+                        continue;
+//                        return new JsonResponse($result['countOfGoods']);
+                    }
+                    if (array_key_exists(
+                        Fields::MARK,
+                        $alternative = $item[Fields::ALTERNATIVES][Fields::ALTERNATIVE]
+                    )) {
+                        $alternatives[0] =
+                            $alternative[Fields::MARK] .
+                            '-' .
+                            $alternative[Fields::MODEL] .
+                            '-' .
+                            $alternative[Fields::CATEGORY];
+                    } else {
+                        foreach ($item[Fields::ALTERNATIVES][Fields::ALTERNATIVE] as $key => $alternative) {
+                            $alternatives[$key] =
+                                serialize($alternative[Fields::MARK]) .
+                                '-' .
+                                serialize($alternative[Fields::MODEL]) .
+                                '-' .
+                                serialize($alternative[Fields::CATEGORY]);
+                        }
+                    }
 
-                    $goods->quantity_moscow = 'name';
-                    $goods->quantity_speterburg = 'name';
-                    $goods->quantity_samara = 'name';
-                    $goods->quantity_chelyabinsk = 'name';
-                    $goods->price_moscow = 2;
-                    $goods->price_speterburg = 3;
-                    $goods->price_samara = 4;
-                    $goods->price_chelyabinsk = 5;
-                    $goods->usage = 'name';
+                    $goods->setUsage(implode('|',$alternatives));
                     $goods->save();
                 }
             }
-        }
+//        }
 
 
-
-
-
-
-        $goods->setName($arr['Каталог']['Наименование']);//  todo change to классификатор
-        $goods->code = 1;
-        $goods->weight = 'name';
-        $goods->quantity_moscow = 'name';
-        $goods->quantity_speterburg = 'name';
-        $goods->quantity_samara = 'name';
-        $goods->quantity_chelyabinsk = 'name';
-        $goods->price_moscow = 2;
-        $goods->price_speterburg = 3;
-        $goods->price_samara = 4;
-        $goods->price_chelyabinsk = 5;
-        $goods->usage = 'name';
-        $goods->save();
-        return 'ok';
+        return new JsonResponse($result['countOfGoods']);
     }
 
     /**
@@ -82,31 +103,35 @@ class WorkWithBigFilesService
     {
         $res = '';
         $countOfGoods = $countOfLines = 0;
-        $file = fopen(storage_path("public") . "/import0_1.xml", "r");
+        $fileImport = fopen(storage_path("public") . "/import0_1.xml", "r");
+        $fileOffers = fopen(storage_path("public") . "/offers0_1.xml", "r");
+
+
+
 
         if ($this->fileSize === 0) {
             $this->fileSize =  filesize(storage_path("public") . "/import0_1.xml");
         }
 
-        fseek($file, $this->offset);
+        fseek($fileImport, $this->offset);
 
-        while(($line = fgets($file)) !== false) {
+        while(($line = fgets($fileImport)) !== false) {
             $countOfLines++;
             $res .= $line;
             if (strpos($line,"</Товар>")) {
                 $countOfGoods++;
             }
 
-            if ($countOfGoods >= 2) {
+            if ($countOfGoods >= 1) {
                 break;
             }
         }
 
 
 
-        $this->offset = ftell($file);
-        fclose($file);
-        $res .= self::END_TAGS;
+        $this->offset = ftell($fileImport);
+        fclose($fileImport);
+        $res .= Fields::END_TAGS;
 
         return [
             'xml'        => $res,
