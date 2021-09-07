@@ -23,13 +23,16 @@ class WorkWithBigFilesService implements Fields
         $result = $this->readBigFile();
         $arr = (new XmlService())->XmlToArray($result['xml']);
         $catalog = $arr[Fields::CATALOG];
-        $goodsArr[0] = [];
+        $goodsArr = [];
 
 //        while ($this->fileSize >= $this->offset) {
-//        $goodsArr = $catalog[Fields::TOVARS][Fields::TOVAR];
-        $result['countOfGoods'] === 1 ? $goodsArr[0] : $goodsArr = $catalog[Fields::TOVARS][Fields::TOVAR];
+       
+        if ($result['countOfGoods'] === 1) {
+            array_push($goodsArr, $catalog[Fields::TOVARS][Fields::TOVAR]);
+        } else {
+            $goodsArr = $catalog[Fields::TOVARS][Fields::TOVAR];
+        }
 
-        dd($goodsArr);
             foreach ($goodsArr as $item) {
                 $goods = new Goods();
                 if (!$goods->isRecordExist('code', $item[Fields::COD])) {
